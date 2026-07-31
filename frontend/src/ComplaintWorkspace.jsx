@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+ import React, { useState } from "react";
 import "./ComplaintWorkspace.css";
+
+const API_URL = "https://aivoa-complaint-system-29dn.onrender.com";
 
 function ComplaintWorkspace() {
   const [category, setCategory] = useState("");
@@ -9,7 +11,10 @@ function ComplaintWorkspace() {
 
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
 
+  // Analyse complaint
   const analyseComplaint = () => {
     if (!category || !name || !email || !complaint) {
       alert("Please fill in all complaint details.");
@@ -17,9 +22,9 @@ function ComplaintWorkspace() {
     }
 
     setLoading(true);
+    setMessage("");
 
-    // Temporary analysis.
-    // We will connect this to your backend/AI later.
+    // Temporary analysis
     setTimeout(() => {
       setAnalysis({
         priority: "Medium",
@@ -32,6 +37,57 @@ function ComplaintWorkspace() {
     }, 700);
   };
 
+  // Submit complaint to backend
+  const submitComplaint = async () => {
+    if (!category || !name || !email || !complaint) {
+      alert("Please fill in all complaint details.");
+      return;
+    }
+
+    setSubmitting(true);
+    setMessage("");
+
+    try {
+      const response = await fetch(`${API_URL}/complaints`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: name,
+          email: email,
+          category: category,
+          description: complaint,
+          status: "Submitted",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to submit complaint");
+      }
+
+      const data = await response.json();
+
+      console.log("Complaint submitted:", data);
+
+      setMessage("Complaint submitted successfully!");
+
+      // Clear form
+      setCategory("");
+      setName("");
+      setEmail("");
+      setComplaint("");
+      setAnalysis(null);
+    } catch (error) {
+      console.error(error);
+      setMessage(
+        "Could not connect to backend. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="workspace">
 
@@ -39,7 +95,9 @@ function ComplaintWorkspace() {
       <header className="workspace-header">
         <div>
           <div className="workspace-brand">AIVOA</div>
+
           <h1>Complaint Workspace</h1>
+
           <p>
             Submit a complaint and get an intelligent preliminary analysis.
           </p>
@@ -58,12 +116,14 @@ function ComplaintWorkspace() {
 
           <div className="panel-title">
             <span>01</span>
+
             <div>
               <h2>Complaint Details</h2>
               <p>Enter the information below.</p>
             </div>
           </div>
 
+          {/* CATEGORY */}
           <div className="form-row">
 
             <div className="field">
@@ -74,17 +134,36 @@ function ComplaintWorkspace() {
                 onChange={(e) => setCategory(e.target.value)}
               >
                 <option value="">Select category</option>
-                <option value="Public Services">Public Services</option>
-                <option value="Education">Education</option>
-                <option value="Healthcare">Healthcare</option>
-                <option value="Transport">Transport</option>
-                <option value="Infrastructure">Infrastructure</option>
-                <option value="Other">Other</option>
+
+                <option value="Public Services">
+                  Public Services
+                </option>
+
+                <option value="Education">
+                  Education
+                </option>
+
+                <option value="Healthcare">
+                  Healthcare
+                </option>
+
+                <option value="Transport">
+                  Transport
+                </option>
+
+                <option value="Infrastructure">
+                  Infrastructure
+                </option>
+
+                <option value="Other">
+                  Other
+                </option>
               </select>
             </div>
 
           </div>
 
+          {/* NAME + EMAIL */}
           <div className="form-row two-columns">
 
             <div className="field">
@@ -111,7 +190,9 @@ function ComplaintWorkspace() {
 
           </div>
 
+          {/* COMPLAINT */}
           <div className="field">
+
             <label>Complaint</label>
 
             <textarea
@@ -120,15 +201,26 @@ function ComplaintWorkspace() {
               value={complaint}
               onChange={(e) => setComplaint(e.target.value)}
             />
+
           </div>
 
+          {/* ANALYSE BUTTON */}
           <button
             className="analyse-button"
             onClick={analyseComplaint}
             disabled={loading}
           >
-            {loading ? "Analysing..." : "Analyse Complaint"}
+            {loading
+              ? "Analysing..."
+              : "Analyse Complaint"}
           </button>
+
+          {/* SUCCESS / ERROR MESSAGE */}
+          {message && (
+            <div className="message">
+              {message}
+            </div>
+          )}
 
         </section>
 
@@ -136,22 +228,36 @@ function ComplaintWorkspace() {
         <section className="assistant-panel">
 
           <div className="assistant-top">
-            <div className="assistant-icon">✦</div>
+
+            <div className="assistant-icon">
+              ✦
+            </div>
 
             <div>
-              <div className="assistant-label">AIVOA AI</div>
-              <h2>Complaint Assistant</h2>
+              <div className="assistant-label">
+                AIVOA AI
+              </div>
+
+              <h2>
+                Complaint Assistant
+              </h2>
             </div>
 
             <span className="online-dot"></span>
+
           </div>
 
           {!analysis ? (
+
             <div className="assistant-empty">
 
-              <div className="empty-symbol">✦</div>
+              <div className="empty-symbol">
+                ✦
+              </div>
 
-              <h3>Ready to analyse</h3>
+              <h3>
+                Ready to analyse
+              </h3>
 
               <p>
                 Fill in the complaint details and select
@@ -160,7 +266,9 @@ function ComplaintWorkspace() {
               </p>
 
             </div>
+
           ) : (
+
             <div className="analysis-result">
 
               <div className="result-heading">
@@ -168,27 +276,54 @@ function ComplaintWorkspace() {
               </div>
 
               <div className="result-card">
-                <span>Priority</span>
+
+                <span>
+                  Priority
+                </span>
+
                 <strong className="priority-medium">
                   {analysis.priority}
                 </strong>
+
               </div>
 
               <div className="result-card">
-                <span>Department</span>
-                <strong>{analysis.department}</strong>
+
+                <span>
+                  Department
+                </span>
+
+                <strong>
+                  {analysis.department}
+                </strong>
+
               </div>
 
               <div className="recommendation">
-                <span>Recommendation</span>
-                <p>{analysis.recommendation}</p>
+
+                <span>
+                  Recommendation
+                </span>
+
+                <p>
+                  {analysis.recommendation}
+                </p>
+
               </div>
 
-              <button className="submit-review-button">
-                Send for Review
+              {/* SEND FOR REVIEW */}
+              <button
+                className="submit-review-button"
+                onClick={submitComplaint}
+                disabled={submitting}
+              >
+                {submitting
+                  ? "Sending..."
+                  : "Send for Review"}
               </button>
 
             </div>
+
           )}
 
         </section>
@@ -197,8 +332,15 @@ function ComplaintWorkspace() {
 
       {/* FOOTER */}
       <footer className="workspace-footer">
-        <strong>AIVOA</strong>
-        <span>AI-powered Complaint Management System</span>
+
+        <strong>
+          AIVOA
+        </strong>
+
+        <span>
+          AI-powered Complaint Management System
+        </span>
+
       </footer>
 
     </div>
